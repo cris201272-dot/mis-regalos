@@ -1967,6 +1967,72 @@ input,select,textarea,
   text-align:center!important;
 }
 
+
+/* v78 — Ajustes definitivos de tarjetas de Familia e Inicio */
+
+/* La tarjeta de persona debe contener absolutamente todos sus controles */
+#peopleList .person-card{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  overflow:hidden!important;
+  position:relative!important;
+  padding-right:14px!important;
+}
+
+/* Cabecera de la persona: texto flexible + papelera dentro */
+#peopleList .person-card > .person-header,
+#peopleList .person-card > .person-top,
+#peopleList .person-card > div:first-child{
+  min-width:0!important;
+  max-width:100%!important;
+}
+#peopleList .person-card .delete-button{
+  flex:0 0 34px!important;
+  width:34px!important;
+  min-width:34px!important;
+  max-width:34px!important;
+  height:34px!important;
+  padding:4px!important;
+  margin:0!important;
+  box-sizing:border-box!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+}
+
+/* Si la cabecera usa flex, no permitir que la papelera sea expulsada */
+#peopleList .person-card > div{
+  min-width:0!important;
+}
+#peopleList .person-card .person-info{
+  min-width:0!important;
+  overflow:hidden!important;
+}
+
+/* Los tres botones de Inicio comparten exactamente el mismo aspecto */
+#homeScreen .buttons{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:10px!important;
+  width:100%!important;
+}
+#homeScreen .buttons .button{
+  width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:13px 8px!important;
+  border:1px solid rgba(130,160,200,.16)!important;
+  border-radius:16px!important;
+  background:linear-gradient(135deg,#3e7fe7,#5c9eff)!important;
+  color:#ffffff!important;
+  box-shadow:none!important;
+  font-weight:700!important;
+}
+#homeScreen .buttons .button span{
+  color:#ffffff!important;
+}
+
 </style>
 </head>
 <body>
