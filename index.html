@@ -2895,7 +2895,7 @@ function loadGifts(){
             return e ? e.name : "";
         }).filter(Boolean);
 
-        return `<div class="gift-list-card" onclick="openGiftForPerson(${item.person.id},${item.idea.id})"><button class="gift-delete-button" title="Borrar regalo" onclick="event.stopPropagation();deleteIdea(${idea.id})">🗑️</button>
+        return `<div class="gift-list-card" onclick="openGiftForPerson(${item.person.id},${item.idea.id})"><button class="gift-delete-button" title="Borrar regalo" onclick="event.stopPropagation();deleteIdea(${item.idea.id})">🗑️</button>
             ${item.idea.photo ? `<img class="gift-list-photo gift-photo-clickable" src="${item.idea.photo}" alt="Regalo" onclick="event.stopPropagation();openGiftPhotoViewer(this.src)">` : `<div class="gift-list-photo">🎁</div>`}
             <div class="gift-list-info">
                 <div class="gift-list-topline">
