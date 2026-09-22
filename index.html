@@ -2033,6 +2033,114 @@ input,select,textarea,
   color:#ffffff!important;
 }
 
+
+/* v80 — Unificar formularios oscuros */
+#addPersonScreen,
+#addPersonScreen .content,
+#addPersonScreen .form-card,
+#addPersonScreen .photo-upload,
+#addPersonScreen .form-group{
+  background:#0b0f14!important;
+  color:#f5f7fb!important;
+}
+#addPersonScreen .form-card{
+  background:#1b2028!important;
+  border:1px solid rgba(130,160,200,.15)!important;
+  box-shadow:0 8px 28px rgba(0,0,0,.22)!important;
+}
+#addPersonScreen header{
+  background:linear-gradient(180deg,#122946,#0d1c30)!important;
+  color:#fff!important;
+}
+#addPersonScreen header *{
+  color:#fff!important;
+}
+#addPersonScreen label,
+#addPersonScreen .form-group label{
+  color:#eaf0f8!important;
+}
+#addPersonScreen input,
+#addPersonScreen select,
+#addPersonScreen textarea{
+  background:#1a2028!important;
+  color:#f3f6fb!important;
+  border:1px solid rgba(130,160,200,.20)!important;
+}
+#addPersonScreen option{
+  background:#1a2028!important;
+  color:#f3f6fb!important;
+}
+#addPersonScreen input::placeholder,
+#addPersonScreen textarea::placeholder{
+  color:#7f8b9b!important;
+}
+#addPersonScreen .photo-label,
+#addPersonScreen .small-button{
+  background:#24466d!important;
+  color:#dcecff!important;
+  border:1px solid rgba(132,190,255,.22)!important;
+}
+#addPersonScreen .photo-preview{
+  background:#111820!important;
+  color:#dcecff!important;
+  border:1px solid rgba(130,160,200,.18)!important;
+}
+#addPersonScreen .save-button{
+  background:linear-gradient(135deg,#3e7fe7,#5c9eff)!important;
+  color:#fff!important;
+}
+#addPersonScreen .cancel-button{
+  background:#242a33!important;
+  color:#e9eef5!important;
+}
+
+/* Nuevo regalo: botón Añadir foto oscuro/azul */
+#addIdeaScreen .photo-label,
+#addIdeaScreen label.photo-label,
+#ideaScreen .photo-label,
+#ideaScreen label.photo-label{
+  background:#24466d!important;
+  color:#dcecff!important;
+  border:1px solid rgba(132,190,255,.22)!important;
+}
+#addIdeaScreen .photo-preview,
+#ideaScreen .photo-preview{
+  background:#111820!important;
+  color:#dcecff!important;
+  border-color:rgba(130,160,200,.18)!important;
+}
+
+
+/* v81 — Lista de personas del formulario de evento con scroll */
+#newEventPeopleList,
+#editEventPeopleList{
+  max-height:260px!important;
+  height:260px!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  -webkit-overflow-scrolling:touch!important;
+  overscroll-behavior:contain!important;
+  box-sizing:border-box!important;
+  padding:8px!important;
+  background:#151f2b!important;
+  border:1px solid rgba(130,160,200,.20)!important;
+  border-radius:12px!important;
+}
+#newEventPeopleList > *,
+#editEventPeopleList > *{
+  min-width:0!important;
+  max-width:100%!important;
+}
+#newEventPeopleList::-webkit-scrollbar,
+#editEventPeopleList::-webkit-scrollbar{
+  width:6px;
+}
+#newEventPeopleList::-webkit-scrollbar-thumb,
+#editEventPeopleList::-webkit-scrollbar-thumb{
+  background:#496b96;
+  border-radius:8px;
+}
+
 </style>
 </head>
 <body>
@@ -3462,7 +3570,7 @@ function loadHomeGiftSummary(){
 
     people.forEach(person => (person.ideas || []).forEach(idea => gifts.push({person,idea})));
 
-    const pending = gifts.filter(x => !["ENTREGADO","RECIBIDO"].includes(x.idea.status || "IDEA"));
+    const pending = gifts.filter(x => (x.idea.status || "IDEA") !== "ENTREGADO");
     const byStatus = {IDEA:0,POR_COMPRAR:0,COMPRADO:0,RECIBIDO:0,ENVUELTO:0,ENTREGADO:0};
     gifts.forEach(x => byStatus[x.idea.status || "IDEA"] = (byStatus[x.idea.status || "IDEA"] || 0) + 1);
 
