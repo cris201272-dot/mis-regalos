@@ -1683,6 +1683,105 @@ input,select,textarea,
   color:#e8d8a8!important;
 }
 
+
+/* =========================================================
+   RECORTADOR DE FOTOS
+   ========================================================= */
+.photo-crop-modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  background:rgba(0,0,0,.78);
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+}
+.photo-crop-modal.open{display:flex}
+.photo-crop-card{
+  width:min(520px,100%);
+  max-height:94vh;
+  overflow:auto;
+  background:#151b23;
+  color:#f5f7fb;
+  border:1px solid rgba(130,160,200,.20);
+  border-radius:22px;
+  padding:18px;
+  box-shadow:0 18px 60px rgba(0,0,0,.45);
+}
+.photo-crop-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.photo-crop-header h2{margin:0;color:#fff}
+.photo-crop-close{
+  border:0;
+  background:#252d38;
+  color:#fff;
+  width:38px;
+  height:38px;
+  border-radius:50%;
+  font-size:25px;
+}
+.photo-crop-help{
+  color:#aeb8c7;
+  margin:8px 0 14px;
+}
+.photo-crop-viewport{
+  position:relative;
+  width:min(78vw,360px);
+  height:min(78vw,360px);
+  margin:0 auto 18px;
+  overflow:hidden;
+  border-radius:18px;
+  background:#090c10;
+  border:1px solid rgba(130,160,200,.22);
+  touch-action:none;
+}
+#photoCropImage{
+  position:absolute;
+  left:50%;
+  top:50%;
+  max-width:none;
+  transform-origin:center center;
+  user-select:none;
+  -webkit-user-drag:none;
+  pointer-events:none;
+}
+.photo-crop-frame{
+  position:absolute;
+  inset:0;
+  border:2px solid rgba(255,255,255,.9);
+  border-radius:18px;
+  box-shadow:0 0 0 9999px rgba(0,0,0,.18);
+  pointer-events:none;
+}
+.photo-crop-controls{
+  display:grid;
+  gap:12px;
+}
+.photo-crop-controls label{
+  display:grid;
+  gap:5px;
+  color:#f0f3f8;
+  font-weight:600;
+}
+.photo-crop-controls input[type="range"]{
+  width:100%;
+  accent-color:#4f8cff;
+}
+.photo-crop-actions{
+  display:flex;
+  gap:10px;
+  margin-top:18px;
+}
+.photo-crop-actions button{
+  flex:1;
+  min-height:46px;
+}
+
 </style>
 </head>
 <body>
@@ -1860,8 +1959,8 @@ input,select,textarea,
 </div>
 <div class="form-group"><label>Nombre</label><input type="text" id="personName" placeholder="Ej. Laura"></div>
 <div class="form-group"><label>Apellidos</label><input type="text" id="personSurname" placeholder="Ej. García"></div>
-<div class="form-group"><label>Parentesco</label><select id="personRelation"><option value="">Selecciona...</option><option>Marido</option><option>Mujer</option><option>Hijo/a</option><option>Padre</option><option>Madre</option><option>Hermano/a</option><option>Abuelo/a</option><option>Nieto/a</option><option>Sobrino/a</option><option>Tío/a</option><option>Primo/a</option><option>Amigo/a</option><option>Otro</option></select></div>
-<div class="form-group"><label>Fecha de cumpleaños</label><input type="text" id="personBirthday" placeholder="DD/MM" maxlength="5" inputmode="numeric"></div>
+<div class="form-group"><label>Parentesco</label><select id="personRelation"><option value="">Selecciona...</option><option>Marido</option><option>Mujer</option><option>Hijo/a</option><option>Padre</option><option>Madre</option><option>Hermano/a</option><option>Cuñado/a</option><option>Abuelo/a</option><option>Nieto/a</option><option>Sobrino/a</option><option>Tío/a</option><option>Primo/a</option><option>Amigo/a</option><option>Otro</option></select></div>
+<div class="form-group"><label>Fecha de cumpleaños</label><input type="text" id="personBirthday" placeholder="DD/MM" maxlength="5" inputmode="text" autocapitalize="off" autocomplete="bday"></div>
 <div class="form-group"><label>Notas</label><textarea id="personNotes" placeholder="Gustos, tallas, aficiones..."></textarea></div>
 <div class="form-buttons"><button class="cancel-button" onclick="showScreen('familyScreen')">Cancelar</button><button class="save-button" onclick="savePerson()">Guardar</button></div>
 </div></div>
@@ -1910,6 +2009,37 @@ input,select,textarea,
 </div></div>
 </div>
 
+
+
+<!-- Recortador de fotos -->
+<div id="photoCropModal" class="photo-crop-modal" aria-hidden="true">
+  <div class="photo-crop-card">
+    <div class="photo-crop-header">
+      <h2>✂️ Recortar foto</h2>
+      <button type="button" class="photo-crop-close" onclick="closePhotoCropper()">×</button>
+    </div>
+    <p class="photo-crop-help">Ajusta la foto para elegir exactamente qué quieres mostrar.</p>
+    <div class="photo-crop-viewport" id="photoCropViewport">
+      <img id="photoCropImage" alt="Foto para recortar">
+      <div class="photo-crop-frame"></div>
+    </div>
+    <div class="photo-crop-controls">
+      <label>🔍 Zoom
+        <input id="photoCropZoom" type="range" min="1" max="3" step="0.01" value="1" oninput="updateCropImage()">
+      </label>
+      <label>↔️ Horizontal
+        <input id="photoCropX" type="range" min="-100" max="100" step="1" value="0" oninput="updateCropImage()">
+      </label>
+      <label>↕️ Vertical
+        <input id="photoCropY" type="range" min="-100" max="100" step="1" value="0" oninput="updateCropImage()">
+      </label>
+    </div>
+    <div class="photo-crop-actions">
+      <button type="button" class="cancel-button" onclick="closePhotoCropper()">Cancelar</button>
+      <button type="button" class="save-button" onclick="applyPhotoCrop()">Usar esta foto</button>
+    </div>
+  </div>
+</div>
 
 <div id="settingsScreen" class="screen">
     <div class="header">
@@ -3419,20 +3549,9 @@ function openProfile(id){
 function changePersonPhoto(event){
     const file = event.target.files && event.target.files[0];
     if(!file || !currentPersonId) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e){
-        const people = getPeople();
-        const person = people.find(p => p.id === currentPersonId);
-        if(!person) return;
-
-        person.photo = e.target.result;
-        savePeople(people);
-        openProfile(currentPersonId);
-    };
-    reader.readAsDataURL(file);
+    openPhotoCropper(file, { mode:"person", personId:currentPersonId });
+    event.target.value = "";
 }
-
 
 function getGiftEventId(personId, ideaId){
     const event = getEvents().find(e =>
@@ -3648,19 +3767,8 @@ function showMessage(name){ alert(name + " será nuestra próxima función 😊"
 function previewImage(input, previewId){
     const file = input.files && input.files[0];
     if(!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e){
-        const preview = document.getElementById(previewId);
-        preview.dataset.photo = e.target.result;
-
-        if(previewId === "personPhotoPreview"){
-            preview.innerHTML = `<img class="profile-photo" style="margin:0;width:96px;height:96px" src="${e.target.result}" alt="Vista previa">`;
-        } else {
-            preview.innerHTML = `<img class="idea-photo" style="width:120px;height:120px;object-fit:cover;border-radius:18px" src="${e.target.result}" alt="Vista previa">`;
-        }
-    };
-    reader.readAsDataURL(file);
+    openPhotoCropper(file, { mode:"preview", previewId });
+    input.value = "";
 }
 
 function escapeHtml(text){
@@ -3673,5 +3781,158 @@ loadEvents();
 loadGifts();
 loadHomeEvents();
 </script>
+
+<script>
+document.addEventListener("input", function(e){
+    if(e.target && e.target.id === "personBirthday"){
+        let value = e.target.value.replace(/[^\d\/]/g, "");
+        if(value.length === 2 && !value.includes("/") && e.inputType === "insertText"){
+            // Do not force the slash while typing; the user can enter it
+            // manually from the normal iPhone keyboard.
+        }
+        if(value.length > 5) value = value.slice(0,5);
+        e.target.value = value;
+    }
+});
+</script>
+
+
+<script>
+let photoCropState = null;
+
+function openPhotoCropper(file, target){
+  if(!file || !file.type || !file.type.startsWith("image/")){
+    alert("Selecciona una imagen.");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const img = document.getElementById("photoCropImage");
+    const modal = document.getElementById("photoCropModal");
+    const zoom = document.getElementById("photoCropZoom");
+    const x = document.getElementById("photoCropX");
+    const y = document.getElementById("photoCropY");
+
+    photoCropState = { dataUrl:e.target.result, target, imageWidth:0, imageHeight:0 };
+
+    img.onload = function(){
+      photoCropState.imageWidth = img.naturalWidth;
+      photoCropState.imageHeight = img.naturalHeight;
+      zoom.value = "1";
+      x.value = "0";
+      y.value = "0";
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden","false");
+      updateCropImage();
+    };
+    img.src = e.target.result;
+  };
+  reader.onerror = () => alert("No se ha podido leer la foto.");
+  reader.readAsDataURL(file);
+}
+
+function closePhotoCropper(){
+  const modal=document.getElementById("photoCropModal");
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden","true");
+  photoCropState=null;
+}
+
+function updateCropImage(){
+  if(!photoCropState) return;
+  const img=document.getElementById("photoCropImage");
+  const viewport=document.getElementById("photoCropViewport");
+  const zoom=Number(document.getElementById("photoCropZoom").value);
+  const x=Number(document.getElementById("photoCropX").value);
+  const y=Number(document.getElementById("photoCropY").value);
+
+  const vw=viewport.clientWidth;
+  const vh=viewport.clientHeight;
+  const baseScale=Math.max(vw/photoCropState.imageWidth, vh/photoCropState.imageHeight);
+  const scale=baseScale*zoom;
+
+  img.style.width=(photoCropState.imageWidth*scale)+"px";
+  img.style.height=(photoCropState.imageHeight*scale)+"px";
+
+  const maxX=Math.max(0,(photoCropState.imageWidth*scale-vw)/2);
+  const maxY=Math.max(0,(photoCropState.imageHeight*scale-vh)/2);
+
+  img.style.transform=`translate(calc(-50% + ${x/100*maxX}px), calc(-50% + ${y/100*maxY}px))`;
+}
+
+async function applyPhotoCrop(){
+  if(!photoCropState) return;
+
+  const viewport=document.getElementById("photoCropViewport");
+  const zoom=Number(document.getElementById("photoCropZoom").value);
+  const x=Number(document.getElementById("photoCropX").value);
+  const y=Number(document.getElementById("photoCropY").value);
+  const iw=photoCropState.imageWidth;
+  const ih=photoCropState.imageHeight;
+  const vw=viewport.clientWidth;
+  const vh=viewport.clientHeight;
+
+  const baseScale=Math.max(vw/iw, vh/ih);
+  const scale=baseScale*zoom;
+  const maxX=Math.max(0,(iw*scale-vw)/2);
+  const maxY=Math.max(0,(ih*scale-vh)/2);
+
+  // Position of the source image inside the crop viewport, in CSS pixels.
+  const left=(vw-iw*scale)/2 + x/100*maxX;
+  const top=(vh-ih*scale)/2 + y/100*maxY;
+
+  const outputSize=900;
+  const canvas=document.createElement("canvas");
+  canvas.width=outputSize;
+  canvas.height=outputSize;
+  const ctx=canvas.getContext("2d");
+  if(!ctx){
+    alert("No se ha podido recortar la foto.");
+    return;
+  }
+
+  const sourceX=Math.max(0, -left/scale);
+  const sourceY=Math.max(0, -top/scale);
+  const sourceW=Math.min(iw-sourceX, vw/scale);
+  const sourceH=Math.min(ih-sourceY, vh/scale);
+
+  ctx.drawImage(
+    document.getElementById("photoCropImage"),
+    sourceX, sourceY, sourceW, sourceH,
+    0, 0, outputSize, outputSize
+  );
+
+  const compressed=canvas.toDataURL("image/jpeg",0.80);
+  const target=photoCropState.target;
+
+  if(target.mode==="person"){
+    const people=getPeople();
+    const person=people.find(p=>String(p.id)===String(target.personId));
+    if(person){
+      person.photo=compressed;
+      savePeople(people);
+      closePhotoCropper();
+      openProfile(target.personId);
+      return;
+    }
+  }
+
+  if(target.mode==="preview"){
+    const preview=document.getElementById(target.previewId);
+    if(preview){
+      preview.dataset.photo=compressed;
+      if(target.previewId==="personPhotoPreview"){
+        preview.innerHTML=`<img class="profile-photo" style="margin:0;width:96px;height:96px;object-fit:cover" src="${compressed}" alt="Vista previa">`;
+      }else{
+        preview.innerHTML=`<img class="idea-photo" style="width:120px;height:120px;object-fit:cover;border-radius:18px" src="${compressed}" alt="Vista previa">`;
+      }
+    }
+  }
+
+  closePhotoCropper();
+}
+</script>
+
 </body>
 </html>
