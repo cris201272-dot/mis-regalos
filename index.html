@@ -2141,6 +2141,35 @@ input,select,textarea,
   border-radius:8px;
 }
 
+
+/* v82 — Borrar regalos */
+.gift-list-card{
+  position:relative!important;
+  padding-right:52px!important;
+}
+.gift-delete-button{
+  position:absolute!important;
+  right:10px!important;
+  top:50%!important;
+  transform:translateY(-50%)!important;
+  width:34px!important;
+  height:34px!important;
+  min-width:34px!important;
+  padding:0!important;
+  border:1px solid rgba(255,120,130,.22)!important;
+  border-radius:10px!important;
+  background:#3a2026!important;
+  color:#ffb2ba!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-size:17px!important;
+  z-index:3!important;
+}
+.gift-delete-button:active{
+  transform:translateY(-50%) scale(.94)!important;
+}
+
 </style>
 </head>
 <body>
@@ -2866,7 +2895,7 @@ function loadGifts(){
             return e ? e.name : "";
         }).filter(Boolean);
 
-        return `<div class="gift-list-card" onclick="openGiftForPerson(${item.person.id},${item.idea.id})">
+        return `<div class="gift-list-card" onclick="openGiftForPerson(${item.person.id},${item.idea.id})"><button class="gift-delete-button" title="Borrar regalo" onclick="event.stopPropagation();deleteIdea(${idea.id})">🗑️</button>
             ${item.idea.photo ? `<img class="gift-list-photo gift-photo-clickable" src="${item.idea.photo}" alt="Regalo" onclick="event.stopPropagation();openGiftPhotoViewer(this.src)">` : `<div class="gift-list-photo">🎁</div>`}
             <div class="gift-list-info">
                 <div class="gift-list-topline">
@@ -4113,13 +4142,22 @@ function getStatusLabel(status){
 }
 
 function deleteIdea(id){
-    if(!confirm("¿Quieres eliminar esta idea de regalo?")) return;
+    if(!confirm("¿Quieres eliminar este regalo?")) return;
     const people = getPeople();
-    const person = people.find(p => p.id === currentPersonId);
-    if(!person) return;
-    person.ideas = (person.ideas || []).filter(i => i.id !== id);
+    let deleted = false;
+    people.forEach(person => {
+        const before = (person.ideas || []).length;
+        person.ideas = (person.ideas || []).filter(i => i.id !== id);
+        if(person.ideas.length !== before) deleted = true;
+    });
+    if(!deleted) return;
     savePeople(people);
-    openProfile(currentPersonId);
+
+    // Refresh the screen we are currently viewing.
+    if(typeof loadGifts === "function") loadGifts();
+    if(typeof currentPersonId !== "undefined" && currentPersonId){
+        try { openProfile(currentPersonId); } catch(e) {}
+    }
 }
 
 function deletePerson(id){
