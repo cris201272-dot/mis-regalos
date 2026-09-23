@@ -4163,8 +4163,11 @@ function deleteIdea(id){
     if(!deleted) return;
     savePeople(people);
 
-    // Refresh the screen we are currently viewing.
+    // Refresh all affected views so counters and lists stay synchronized.
     if(typeof loadGifts === "function") loadGifts();
+    if(typeof loadPeople === "function") loadPeople();
+    if(typeof loadHomeGiftSummary === "function") loadHomeGiftSummary();
+    if(typeof loadHomeEvents === "function") loadHomeEvents();
     if(typeof currentPersonId !== "undefined" && currentPersonId){
         try { openProfile(currentPersonId); } catch(e) {}
     }
