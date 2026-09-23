@@ -3121,7 +3121,7 @@ function renderEventPeopleCompact(event){
     const visible = people.slice(0, 4);
     const names = visible.map(person => {
         const fullName = person.name + (person.surname ? " " + person.surname : "");
-        const giftCount = eventGifts.filter(ref =>
+        const giftCount = getValidEventGifts(event).filter(ref =>
             String(ref.personId) === String(person.id)
         ).length;
 
@@ -3154,7 +3154,7 @@ function loadEvents(){
 
     const render = (event, completedCard=false) => {
         const people = getPeople();
-        const giftCount = (event.gifts || []).length;
+        const giftCount = getValidEventGifts(event).length;
         return `<div class="event-list-card ${completedCard ? "event-completed-card" : ""}" onclick="openEvent(${event.id})">
             <div class="event-list-top">
                 <div style="flex:1">
@@ -3313,11 +3313,10 @@ function openEvent(eventId){
     if(!event) return;
 
     const people = getPeople();
-    const giftItems = (event.gifts || []).map(ref => {
-        const person = people.find(p => String(p.id) === String(ref.personId));
-        const idea = person && (person.ideas || []).find(i => String(i.id) === String(ref.ideaId));
-        return person && idea ? {person, idea} : null;
-    }).filter(Boolean);
+    const giftItems = getValidEventGifts(event).map(ref => ({
+        person: ref.person,
+        idea: ref.idea
+    }));
 
     const counts = {
         IDEA: 0, POR_COMPRAR: 0, COMPRADO: 0, RECIBIDO: 0, ENVUELTO: 0, ENTREGADO: 0
@@ -3715,6 +3714,29 @@ function loadHomeEvents(){
 }
 
 
+function getValidEventGifts(event){
+    if(!event || !Array.isArray(event.gifts)) return [];
+
+    const people = getPeople();
+    const seen = new Set();
+    const result = [];
+
+    event.gifts.forEach(ref => {
+        const person = people.find(p => String(p.id) === String(ref.personId));
+        const idea = person && (person.ideas || []).find(i => String(i.id) === String(ref.ideaId));
+        if(!person || !idea) return;
+
+        // Avoid counting the same gift twice if an old version created duplicate references.
+        const key = String(person.id) + ":" + String(idea.id);
+        if(seen.has(key)) return;
+        seen.add(key);
+
+        result.push({personId: person.id, ideaId: idea.id, person, idea});
+    });
+
+    return result;
+}
+
 function isGiftInEvent(personId, ideaId, eventId){
     const event = getEvents().find(e => String(e.id) === String(eventId));
     return !!(event && (event.gifts || []).some(g => String(g.personId) === String(personId) && String(g.ideaId) === String(ideaId)));
@@ -3763,7 +3785,7 @@ function loadPeople(){
         const ideas = person.ideas || [];
         const giftsWithoutEvent = ideas.filter(idea =>
             !events.some(event =>
-                (event.gifts || []).some(g =>
+                getValidEventGifts(event).some(g =>
                     String(g.personId) === String(person.id) &&
                     String(g.ideaId) === String(idea.id)
                 )
@@ -3777,7 +3799,7 @@ function loadPeople(){
             ? `<div class="person-events" onclick="event.stopPropagation()">
                 <div class="person-events-title">📅 Eventos (${personEvents.length})</div>
                 ${personEvents.sort((a,b)=>a.date.localeCompare(b.date)).map(event => {
-                    const giftCount = (event.gifts || []).filter(g => String(g.personId) === String(person.id)).length;
+                    const giftCount = getValidEventGifts(event).filter(g => String(g.personId) === String(person.id)).length;
                     return `<button class="person-event-row" onclick="event.stopPropagation();openEvent(${event.id})">
                         <span class="person-event-name">📅 ${escapeHtml(event.name)}</span>
                         <span class="person-event-date">${formatEventDate(event.date, event.type)}</span>
@@ -4151,6 +4173,37 @@ function getStatusLabel(status){
     return labels[status] || "💡 Idea";
 }
 
+
+function repairEventGiftReferences(){
+    const events = getEvents();
+    const people = getPeople();
+    let changed = false;
+
+    events.forEach(event => {
+        const seen = new Set();
+        const valid = [];
+        (event.gifts || []).forEach(ref => {
+            const person = people.find(p => String(p.id) === String(ref.personId));
+            const idea = person && (person.ideas || []).find(i => String(i.id) === String(ref.ideaId));
+            if(!person || !idea) {
+                changed = true;
+                return;
+            }
+            const key = String(person.id) + ":" + String(idea.id);
+            if(seen.has(key)){
+                changed = true;
+                return;
+            }
+            seen.add(key);
+            valid.push({personId:Number(person.id), ideaId:Number(idea.id)});
+        });
+        if(valid.length !== (event.gifts || []).length) changed = true;
+        event.gifts = valid;
+    });
+
+    if(changed) saveEvents(events);
+}
+
 function deleteIdea(id){
     if(!confirm("¿Quieres eliminar este regalo?")) return;
 
@@ -4220,6 +4273,7 @@ function escapeHtml(text){
 }
 function escapeAttribute(text){ return String(text).replace(/"/g,"%22"); }
 
+repairEventGiftReferences();
 loadPeople();
 loadEvents();
 loadGifts();
