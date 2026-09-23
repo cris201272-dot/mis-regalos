@@ -4153,21 +4153,48 @@ function getStatusLabel(status){
 
 function deleteIdea(id){
     if(!confirm("¿Quieres eliminar este regalo?")) return;
+
+    const giftId = String(id);
     const people = getPeople();
     let deleted = false;
+
+    // Eliminar el regalo de la persona, comparando IDs como texto
+    // para evitar problemas si un ID llega como número o como cadena.
     people.forEach(person => {
-        const before = (person.ideas || []).length;
-        person.ideas = (person.ideas || []).filter(i => i.id !== id);
-        if(person.ideas.length !== before) deleted = true;
+        const ideas = Array.isArray(person.ideas) ? person.ideas : [];
+        const updatedIdeas = ideas.filter(idea => String(idea.id) !== giftId);
+        if(updatedIdeas.length !== ideas.length) {
+            deleted = true;
+            person.ideas = updatedIdeas;
+        }
     });
+
     if(!deleted) return;
+
+    // Guardar primero los datos definitivos.
     savePeople(people);
 
-    // Refresh all affected views so counters and lists stay synchronized.
-    if(typeof loadGifts === "function") loadGifts();
-    if(typeof loadPeople === "function") loadPeople();
-    if(typeof loadHomeGiftSummary === "function") loadHomeGiftSummary();
+    // Eliminar también las referencias al regalo dentro de los eventos.
+    const events = getEvents();
+    let eventsChanged = false;
+    events.forEach(event => {
+        const gifts = Array.isArray(event.gifts) ? event.gifts : [];
+        const updatedGifts = gifts.filter(g => String(g.ideaId) !== giftId);
+        if(updatedGifts.length !== gifts.length) {
+            event.gifts = updatedGifts;
+            eventsChanged = true;
+        }
+    });
+    if(eventsChanged) saveEvents(events);
+
+    // Refrescar explícitamente todas las vistas que muestran contadores.
+    loadGifts();
+    loadPeople();
+    if(typeof loadEvents === "function") loadEvents();
     if(typeof loadHomeEvents === "function") loadHomeEvents();
+    if(typeof loadHomeGiftSummary === "function") loadHomeGiftSummary();
+
+    // Si estábamos viendo la ficha de una persona, actualizarla también.
     if(typeof currentPersonId !== "undefined" && currentPersonId){
         try { openProfile(currentPersonId); } catch(e) {}
     }
