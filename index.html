@@ -4416,39 +4416,77 @@ function updateCropImage(){
   img.style.transform=`translate(calc(-50% + ${x/100*maxX}px), calc(-50% + ${y/100*maxY}px))`;
 }
 
-function applyOriginalPhoto(){
+async function compressOriginalPhoto(dataUrl, maxDimension=1600, quality=0.82){
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+
+    img.onload = () => {
+      let width = img.naturalWidth || img.width;
+      let height = img.naturalHeight || img.height;
+
+      // Keep the complete photo and its proportions; only reduce its resolution.
+      const scale = Math.min(1, maxDimension / Math.max(width, height));
+      width = Math.max(1, Math.round(width * scale));
+      height = Math.max(1, Math.round(height * scale));
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext("2d", { alpha: false });
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // JPEG greatly reduces the size of iPhone photos while preserving the full image.
+      const compressed = canvas.toDataURL("image/jpeg", quality);
+      resolve(compressed);
+    };
+
+    img.onerror = () => reject(new Error("No se pudo procesar la foto."));
+    img.src = dataUrl;
+  });
+}
+
+async function applyOriginalPhoto(){
   if(!photoCropState) return;
 
   const original = photoCropState.dataUrl;
   const target = photoCropState.target;
 
-  if(target.mode==="person"){
-    const people=getPeople();
-    const person=people.find(p=>String(p.id)===String(target.personId));
-    if(person){
-      person.photo=original;
-      savePeople(people);
-      closePhotoCropper();
-      openProfile(target.personId);
-      return;
-    }
-  }
+  try {
+    // The image is NOT cropped. It is only resized/compressed so large iPhone
+    // photos can be stored safely in localStorage.
+    const compressed = await compressOriginalPhoto(original, 1600, 0.82);
 
-  if(target.mode==="preview"){
-    const preview=document.getElementById(target.previewId);
-    if(preview){
-      preview.dataset.photo=original;
-
-      if(target.previewId==="personPhotoPreview"){
-        preview.innerHTML=`<img class="profile-photo" style="margin:0;width:96px;height:96px;object-fit:contain" src="${original}" alt="Vista previa">`;
-      }else{
-        // Keep the original aspect ratio in the preview; the saved image is untouched.
-        preview.innerHTML=`<img class="idea-photo" style="width:120px;height:120px;object-fit:contain;border-radius:18px" src="${original}" alt="Vista previa">`;
+    if(target.mode==="person"){
+      const people=getPeople();
+      const person=people.find(p=>String(p.id)===String(target.personId));
+      if(person){
+        person.photo=compressed;
+        savePeople(people);
+        closePhotoCropper();
+        openProfile(target.personId);
+        return;
       }
     }
-  }
 
-  closePhotoCropper();
+    if(target.mode==="preview"){
+      const preview=document.getElementById(target.previewId);
+      if(preview){
+        preview.dataset.photo=compressed;
+
+        if(target.previewId==="personPhotoPreview"){
+          preview.innerHTML=`<img class="profile-photo" style="margin:0;width:96px;height:96px;object-fit:contain" src="${compressed}" alt="Vista previa">`;
+        }else{
+          preview.innerHTML=`<img class="idea-photo" style="width:120px;height:120px;object-fit:contain;border-radius:18px" src="${compressed}" alt="Vista previa">`;
+        }
+      }
+    }
+
+    closePhotoCropper();
+  } catch(error) {
+    console.error("Error al guardar la foto original:", error);
+    alert("No se ha podido guardar la foto. Prueba con una foto más pequeña.");
+  }
 }
 
 async function applyPhotoCrop(){
