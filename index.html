@@ -2180,6 +2180,62 @@ input,select,textarea,
   border-color:rgba(130,160,200,.20)!important;
 }
 
+
+/* v88 — Selector de personas en eventos con diseño oscuro */
+#eventPeopleModal{
+  background:rgba(0,0,0,.74)!important;
+  backdrop-filter:blur(2px);
+  -webkit-backdrop-filter:blur(2px);
+}
+#eventPeopleModal > div{
+  background:#111923!important;
+  color:#f5f7fb!important;
+  border:1px solid rgba(130,160,200,.18)!important;
+  box-shadow:0 18px 50px rgba(0,0,0,.45)!important;
+  max-height:80vh!important;
+  overflow-y:auto!important;
+  -webkit-overflow-scrolling:touch!important;
+}
+#eventPeopleModal h2{
+  color:#f5f7fb!important;
+  margin-top:0!important;
+}
+#eventPeopleModal label{
+  color:#e9eef6!important;
+  border-bottom:1px solid rgba(130,160,200,.14)!important;
+  background:#151f2b!important;
+  border-radius:8px!important;
+  margin-bottom:4px!important;
+}
+#eventPeopleModal label span{
+  color:#e9eef6!important;
+}
+#eventPeopleModal input[type="checkbox"],
+#newEventPeopleList input[type="checkbox"]{
+  accent-color:#4d91f7!important;
+}
+#eventPeopleModal .cancel-button{
+  background:#242b35!important;
+  color:#edf2f8!important;
+  border:1px solid rgba(130,160,200,.18)!important;
+}
+#eventPeopleModal .save-button{
+  background:linear-gradient(135deg,#3e7fe7,#5c9eff)!important;
+  color:#fff!important;
+}
+#newEventPeopleList{
+  background:#151f2b!important;
+  color:#e9eef6!important;
+  border-color:rgba(130,160,200,.20)!important;
+}
+#newEventPeopleList label{
+  color:#e9eef6!important;
+  border-bottom:1px solid rgba(130,160,200,.14)!important;
+}
+#newEventPeopleList label span{
+  color:#e9eef6!important;
+}
+
 </style>
 </head>
 <body>
@@ -2441,7 +2497,8 @@ input,select,textarea,
     </div>
     <div class="photo-crop-actions">
       <button type="button" class="cancel-button" onclick="closePhotoCropper()">Cancelar</button>
-      <button type="button" class="save-button" onclick="applyPhotoCrop()">Usar esta foto</button>
+      <button type="button" class="save-button" onclick="applyOriginalPhoto()">Usar original</button>
+      <button type="button" class="save-button" onclick="applyPhotoCrop()">Recortar y usar</button>
     </div>
   </div>
 </div>
@@ -4062,7 +4119,7 @@ function editIdea(ideaId){
     const preview = document.getElementById("ideaPhotoPreview");
     if(idea.photo){
         preview.dataset.photo = idea.photo;
-        preview.innerHTML = `<img class="idea-photo" style="width:120px;height:120px;object-fit:cover;border-radius:18px" src="${idea.photo}" alt="Foto">`;
+        preview.innerHTML = `<img class="idea-photo" style="width:120px;height:120px;object-fit:contain;border-radius:18px" src="${idea.photo}" alt="Foto">`;
     } else {
         preview.innerHTML = "🎁";
         preview.removeAttribute("data-photo");
@@ -4357,6 +4414,41 @@ function updateCropImage(){
   const maxY=Math.max(0,(photoCropState.imageHeight*scale-vh)/2);
 
   img.style.transform=`translate(calc(-50% + ${x/100*maxX}px), calc(-50% + ${y/100*maxY}px))`;
+}
+
+function applyOriginalPhoto(){
+  if(!photoCropState) return;
+
+  const original = photoCropState.dataUrl;
+  const target = photoCropState.target;
+
+  if(target.mode==="person"){
+    const people=getPeople();
+    const person=people.find(p=>String(p.id)===String(target.personId));
+    if(person){
+      person.photo=original;
+      savePeople(people);
+      closePhotoCropper();
+      openProfile(target.personId);
+      return;
+    }
+  }
+
+  if(target.mode==="preview"){
+    const preview=document.getElementById(target.previewId);
+    if(preview){
+      preview.dataset.photo=original;
+
+      if(target.previewId==="personPhotoPreview"){
+        preview.innerHTML=`<img class="profile-photo" style="margin:0;width:96px;height:96px;object-fit:contain" src="${original}" alt="Vista previa">`;
+      }else{
+        // Keep the original aspect ratio in the preview; the saved image is untouched.
+        preview.innerHTML=`<img class="idea-photo" style="width:120px;height:120px;object-fit:contain;border-radius:18px" src="${original}" alt="Vista previa">`;
+      }
+    }
+  }
+
+  closePhotoCropper();
 }
 
 async function applyPhotoCrop(){
